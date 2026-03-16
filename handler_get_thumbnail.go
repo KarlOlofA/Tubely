@@ -36,7 +36,7 @@ func (cfg *apiConfig) handlerThumbnailGet(w http.ResponseWriter, r *http.Request
 	}
 
 	contentType := header.Header.Get("Content-Type")
-	imageData, err := io.ReadAll(file)
+	tnData, err := io.ReadAll(file)
 
 	videoIDString := r.PathValue("videoID")
 	videoID, err := uuid.Parse(videoIDString)
@@ -54,6 +54,11 @@ func (cfg *apiConfig) handlerThumbnailGet(w http.ResponseWriter, r *http.Request
 	if video.UserID != userID {
 		respondWithError(w, http.StatusUnauthorized, "Unautorized", err)
 		return
+	}
+
+	videoThumbnails[videoID] = thumbnail{
+		data:      tnData,
+		mediaType: contentType,
 	}
 
 	tn, ok := videoThumbnails[videoID]
