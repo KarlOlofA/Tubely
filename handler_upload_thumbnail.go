@@ -1,12 +1,15 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
@@ -54,7 +57,9 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if mediaType != "jpeg" || mediaType != "png" {
+	mediaType = strings.Split(mediaType, "/")[1]
+
+	if mediaType != "jpeg" && mediaType != "png" {
 		respondWithError(w, http.StatusNotFound, "Invalid media type.", err)
 		return
 	}
@@ -70,12 +75,18 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	path := filepath.Join(cfg.assetsRoot, videoID.String())
+	welp := make([]byte, 32)
+
+	_, err = rand.Read(welp)
+
+	base64EncodedFileName := base64.RawURLEncoding.EncodeToString(welp)
+
+	path := filepath.Join(cfg.assetsRoot, base64EncodedFileName)
 	savePath := fmt.Sprintf("%s.%s", path, mediaType)
 
 	dst, err := os.Create(savePath)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Failed to save file", nil)
+		respondWithError(w, http.StatusNotFound, "Failed to save file", err)
 		return
 	}
 
